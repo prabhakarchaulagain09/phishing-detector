@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Phishing URL Detector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="container mx-auto p-4">
+        <div class="bg-white p-8 rounded-lg shadow-md max-w-md mx-auto">
+            <h1 class="text-2xl font-bold text-center mb-6">Phishing URL Detector</h1>
+            
+            <form id="urlForm" class="space-y-4">
+                <input 
+                    type="url" 
+                    id="urlInput" 
+                    name="url"
+                    required 
+                    placeholder="Enter URL to check" 
+                    class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                <button 
+                    type="submit" 
+                    class="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition duration-300"
+                >
+                    Check URL
+                </button>
+            </form>
+
+            <div id="result" class="mt-6 hidden">
+                <div id="resultContent" class="p-4 rounded-md"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('urlForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const url = document.getElementById('urlInput').value;
+            const resultDiv = document.getElementById('result');
+            const resultContent = document.getElementById('resultContent');
+
+            // Clear previous results
+            resultDiv.classList.add('hidden');
+            resultContent.innerHTML = '';
+
+            // Send URL to backend
+            fetch('/check_url', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `url=${encodeURIComponent(url)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    resultContent.innerHTML = `
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                            ${data.error}
+                        </div>
+                    `;
+                } else {
+                    const phishingClass = data.is_phishing ? 
+                        'bg-red-100 border-red-400 text-red-700' : 
+                        'bg-green-100 border-green-400 text-green-700';
+                    
+                    resultContent.innerHTML = `
+                        <div class="${phishingClass} border px-4 py-3 rounded">
+                            <p><strong>URL:</strong> ${data.url}</p>
+                            <p><strong>Phishing Status:</strong> ${data.is_phishing ? 'Suspicious' : 'Legitimate'}</p>
+                            <p><strong>Phishing Probability:</strong> ${(data.phishing_probability * 100).toFixed(2)}%</p>
+                            <p><strong>Legitimate Probability:</strong> ${(data.legitimate_probability * 100).toFixed(2)}%</p>
+                        </div>
+                    `;
+                }
+                resultDiv.classList.remove('hidden');
+            })
+            .catch(error => {
+                resultContent.innerHTML = `
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                        An unexpected error occurred: ${error}
+                    </div>
+                `;
+                resultDiv.classList.remove('hidden');
+            });
+        });
+    </script>
+</body>
+</html>
