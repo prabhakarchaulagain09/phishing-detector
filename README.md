@@ -14,7 +14,6 @@ This is a web application that uses machine learning to detect potentially malic
 - Python
 - Flask
 - Scikit-learn
-- Tailwind CSS
 - Machine Learning
 
 ## Prerequisites
